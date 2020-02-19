@@ -1,84 +1,97 @@
 #define motion_sensor 2
-#define green 7
-#define red1 8
-#define yellow 9
-#define red2 10
-const int buttonPin = 3;
+#define buttonPin 3
+int ledPins[] = {8,9,10,11,12,13};
+int ledPinslength = 6;
+int pwmPins[] = {9,10,11};
+int pwmPinslength = 3;
 int buttonState = 0;
 int lastbuttonState =1;
 int buttonCounter = 0;
+int dimmerValue = 0;
 
 void setup() {
-  //led
-  for(int i=7;i<=10;i++){
-  pinMode(i,OUTPUT);
-  digitalWrite(i,LOW);
-  }
+  led_initialize(ledPins);
   pinMode(motion_sensor,INPUT);
   pinMode(buttonPin,INPUT);
   Serial.begin(9600);
   delay(50000);
 }
-void buttonModeSelector(){
-  buttonState = digitalRead(buttonPin);
-if(buttonState == 1 && buttonState != lastbuttonState){
-  buttonCounter++;
-  Serial.println(buttonCounter);
-  
-  if(buttonCounter>3){
-  buttonCounter =0;
-}
-}
-lastbuttonState = buttonState;
-  }
+
 void loop() {
 
 buttonModeSelector();
+
 int  value_sensor = digitalRead(motion_sensor);
 
   if(value_sensor == HIGH) {
-    Serial.println(value_sensor);
-    digitalWrite(green,HIGH);
+    //Serial.println(value_sensor);
+    //digitalWrite(green,HIGH);
 
   switch(buttonCounter){
+    case 0:
+    dimmer(pwmPins);
+    break;
     case 1:
-    mode_constant(red1,yellow,red2);
+    mode_constant(ledPins);
     break;
     case 2:
-    mode_snake(red1,yellow,red2,300);
+    mode_snake(ledPins,300);
     break;
     case 3:
-    mode_blink(red1,yellow,red2);
+    mode_blink(ledPins);
     break;
   }
  
   }
   else{
     Serial.println(value_sensor);
-    digitalWrite(green,LOW);
+    //digitalWrite(green,LOW);
     delay(100);
     }
 }
+void led_initialize(int led_array[]){
+  for(int i=0;i<ledPinslength;i++){
+    pinMode(led_array[i],OUTPUT);
+    digitalWrite(led_array[i],LOW);
+  }
+}
+void buttonModeSelector(){
+  buttonState = digitalRead(buttonPin);
+  if(buttonState == 1 && buttonState != lastbuttonState){
+    buttonCounter++;
+    Serial.println(buttonCounter);
+  
+    if(buttonCounter>3){
+      buttonCounter =0;
+      }
+  }
+lastbuttonState = buttonState;
+}
 
-void mode_constant(int led1,int led2,int led3){
-  int leds[3] = {led1,led2,led3};
-  for(int i=0;i<3;i++){
-     digitalWrite(leds[i],HIGH);
+void mode_constant(int led_array[]){
+  for(int i=0;i<ledPinslength;i++){
+     digitalWrite(led_array[i],HIGH);
   }
 }
 
-void mode_snake(int led1,int led2, int led3,int delay_time){
-  int leds[3] = {led1,led2,led3};
-  for(int i=0;i<3;i++){
-    digitalWrite(leds[i],HIGH);
-        delay(delay_time);
-    digitalWrite(leds[i],LOW);
+void mode_snake(int led_array[],int delay_time){
+  for(int i=0;i<ledPinslength;i++){
+    digitalWrite(led_array[i],HIGH);
+    delay(delay_time);
+    digitalWrite(led_array[i],LOW);
     }
 }
 
-void mode_blink(int led1,int led2, int led3){
-  int leds[3] = {led1,led2,led3};
-  digitalWrite(leds[random(0,sizeof(leds)/sizeof(int))],HIGH);
+void mode_blink(int led_array[]){
+  digitalWrite(led_array[random(0,ledPinslength)],HIGH);
   delay(random(20,200));
-  digitalWrite(leds[random(0,sizeof(leds)/sizeof(int))],LOW);
+  digitalWrite(led_array[random(0,ledPinslength)],LOW);
+}
+
+void dimmer(int pwm_led[]){
+  dimmerValue = map(analogRead(A0),95,927,0,255);
+  Serial.println(dimmerValue);
+    for (int i=0;i<3;i++){
+    analogWrite(pwm_led[i],dimmerValue);
+    }
 }
